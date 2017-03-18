@@ -9,11 +9,17 @@ import os
 
 class CNN:
 
-	def __init__(self):
+	def __init__(self, alpha):
 		"""
 		defines the architecture of the model
 		"""
-		pass
+
+		"""
+		Initialize variables related to training the model
+		"""
+		# alpha used for leaky relu
+		self.alpha = alpha
+
 
 	def train(self):
 		"""
