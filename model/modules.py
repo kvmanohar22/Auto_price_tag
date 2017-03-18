@@ -4,23 +4,23 @@ import tensorflow as tf
 This file contains helper functions for building the model
 """
 
-def weight_init(shape, name):
+def weight_init(shape, name=None):
 	"""
 	Initialize the random weight matrix from truncated normal distribution
 	"""
-	W = tf.get_variable(name=name, tf.truncated_normal(shape, stddev=0.1))
+	W = tf.get_variable(name, initializer=tf.truncated_normal(shape=shape, stddev=0.1))
 	return W	
 
 
-def bias_init(shape, name):
+def bias_init(shape, name=None):
 	"""
 	Initialize the biases, setting it to 0.1 float32
 	"""
-	b = tf.get_variable(name=name, shape=shape, initializer=tf.constant_initializer(0.1))
+	b = tf.get_variable(name, shape=shape, initializer=tf.constant_initializer(0.1))
 	return b
 
 
-def conv2d(input_volume, kernel, stride=1, name, alpha):
+def conv2d(idx, input_volume, kernel, name, alpha, stride=1):
 	"""
 	Perform 2D convolutions
 
@@ -42,6 +42,7 @@ def conv2d(input_volume, kernel, stride=1, name, alpha):
 		Returns the volume after 2D convolution operation
 	"""
 
+	print '    Layer  %d : Type = Conv, Size = %d * %d, Stride = %d, Filters = %d, Input channels = %d' % (idx, kernel[0], kernel[1], stride, int(kernel[3]), int(kernel[2]))
 	with tf.variable_scope(name):
 		W = weight_init(kernel, 'W')
 		b = bias_init(kernel[3], 'b')
@@ -54,7 +55,7 @@ def conv2d(input_volume, kernel, stride=1, name, alpha):
 		return tf.maximum(alpha*final, final)	
 
 
-def max_pool(input_volume, kernel=3, stride=2, name):
+def max_pool(idx, input_volume, kernel=2, stride=2, name=None):
 	"""	
 	Perform max-pool operation
 
@@ -66,13 +67,14 @@ def max_pool(input_volume, kernel=3, stride=2, name):
 	Output:
 		Returns volume after max pool operation
 	"""	
+	print '    Layer  %d : Type = Pool, Size = %d * %d, Stride = %d' % (idx, kernel, kernel, stride)
 	ksize = [1, kernel, kernel, 1]
 	strides = [1, stride, stride, 1]
 	max_pool = tf.nn.max_pool(input_volume, ksize=ksize, strides=strides, padding='SAME')
 	return max_pool
 
 
-def fully_connected_linear(_input, _output, name):
+def fully_connected_linear(_input, _output):
 	"""
 	Input:
 		_input : 
@@ -98,7 +100,7 @@ def fully_connected_linear(_input, _output, name):
 	return output	
 
 
-def fully_connected(_input, _output, activation=tf.nn.relu, name, alpha):
+def fully_connected(idx, _input, _output, name, alpha, activation=tf.nn.relu):
 	
 	"""
 	Input:
@@ -114,7 +116,7 @@ def fully_connected(_input, _output, activation=tf.nn.relu, name, alpha):
 	Output:
 		Returns the non-linear activations of the layer
 	"""
-
+	print '    Layer  %d : Type = Full, Input dimension = %d, Output dimension = %d ' % (idx, int(_input.get_shape()[1]), _output)
 	with tf.variable_scope(name):
 		linear_output = fully_connected_linear(_input=_input, _output=_output)
 
