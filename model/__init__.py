@@ -1,11 +1,13 @@
 import matplotlib.pyplot as plt
 import tensorflow as tf
-import modules as model
 import pandas as pd
 import numpy as np
 import datetime
 import time
 import os
+
+from options import Options
+import modules as model
 
 class CNN:
 
@@ -66,11 +68,14 @@ class CNN:
 		self.fc_29 = model.fully_connected(29, fully_flat, 4096, name='fc_29', alpha=self.alpha)
 		# skip the dropout layer
 		self.fc_31 = model.fully_connected(31, self.fc_29, 1470, name='fc_31', alpha=self.alpha, activation=None)
- 
-	def model_architecture(self):
+ 		
+ 		self.init_operation = tf.initialize_all_variables()
+ 		self.saver = tf.train.Saver(write_version=1)
+
+	def model_variables(self):
 		architecture = ''
 		for variable in tf.trainable_variables():
-			architecture += str(variable.name) + str(variable.get_shape())
+			architecture += str(variable.name) 
 			architecture += '\n'
 		return architecture
 
@@ -87,9 +92,16 @@ class CNN:
 		"""
 		pass
 
-	def test(self):
+	def test(self, test_image):
 		"""
 		test the model
 		"""
-		pass
-	
+		options = Options()
+		with tf.Session() as sess:
+			print 'Initializing the variables'
+			sess.run(self.init_operation)
+			checkpoint = options.checkpoint_dir+'YOLO_full.ckpt'																						
+			print 'Restoring the saved model_architecture'
+			self.saver.restore(sess, checkpoint)
+			print 'Restored the model successfully !!'
+				

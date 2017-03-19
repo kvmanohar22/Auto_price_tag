@@ -42,7 +42,7 @@ def conv2d(idx, input_volume, kernel, name, alpha, stride=1):
 		Returns the volume after 2D convolution operation
 	"""
 
-	print '    Layer  %d : Type = Conv, Size = %d * %d, Stride = %d, Filters = %d, Input channels = %d' % (idx, kernel[0], kernel[1], stride, int(kernel[3]), int(kernel[2]))
+	print '    Layer  %2d : Type = Conv, Size = %d * %d, Stride = %d, Filters = %d, Input channels = %d' % (idx, kernel[0], kernel[1], stride, int(kernel[3]), int(kernel[2]))
 	with tf.variable_scope(name):
 		W = weight_init(kernel, 'W')
 		b = bias_init(kernel[3], 'b')
@@ -67,7 +67,7 @@ def max_pool(idx, input_volume, kernel=2, stride=2, name=None):
 	Output:
 		Returns volume after max pool operation
 	"""	
-	print '    Layer  %d : Type = Pool, Size = %d * %d, Stride = %d' % (idx, kernel, kernel, stride)
+	print '    Layer  %2d : Type = Pool, Size = %d * %d, Stride = %d' % (idx, kernel, kernel, stride)
 	ksize = [1, kernel, kernel, 1]
 	strides = [1, stride, stride, 1]
 	max_pool = tf.nn.max_pool(input_volume, ksize=ksize, strides=strides, padding='SAME')
@@ -116,7 +116,7 @@ def fully_connected(idx, _input, _output, name, alpha, activation=tf.nn.relu):
 	Output:
 		Returns the non-linear activations of the layer
 	"""
-	print '    Layer  %d : Type = Full, Input dimension = %d, Output dimension = %d ' % (idx, int(_input.get_shape()[1]), _output)
+	print '    Layer  %2d : Type = Full, Input dimension = %d, Output dimension = %d ' % (idx, int(_input.get_shape()[1]), _output)
 	with tf.variable_scope(name):
 		linear_output = fully_connected_linear(_input=_input, _output=_output)
 

@@ -2,8 +2,15 @@ import argparse
 import model
 
 def main(args):
-	print 'Building the model'
+	print '    Building the model'
 	yolo = model.CNN(args.alpha)
+	
+	variables = yolo.model_variables()
+	print variables
+	if args.t:
+		print 'Testing the model'
+		yolo.test(args.t)
+
 
 def parser():
 	"""
@@ -11,6 +18,8 @@ def parser():
 	"""
 	parser = argparse.ArgumentParser(description="Yolo Description")
 	parser.add_argument("alpha", type=float, help="Alpha for Leaky ReLU activation")
+	parser.add_argument("-t", "-Test", help="Test the model by providing an image")
+	parser.add_argument("-T", "-Train", help="Train the model by providing training directory")
 
 	args = parser.parse_args()
 	return args
