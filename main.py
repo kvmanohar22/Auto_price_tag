@@ -5,11 +5,11 @@ def main(args):
 	print '    Building the model'
 	yolo = model.CNN(args.alpha)
 	
-	variables = yolo.model_variables()
-	print variables
+	print 'Total parameters of the model are : ', yolo.count_params()
 	if args.t:
 		print 'Testing the model'
 		yolo.test(args.t)
+
 
 
 def parser():

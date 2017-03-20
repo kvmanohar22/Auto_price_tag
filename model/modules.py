@@ -1,4 +1,5 @@
 import tensorflow as tf
+import numpy as np
 
 """
 This file contains helper functions for building the model
@@ -41,18 +42,23 @@ def conv2d(idx, input_volume, kernel, name, alpha, stride=1):
 	Output:
 		Returns the volume after 2D convolution operation
 	"""
+	pad_size = kernel[0]//2
+	pad_mat = np.array([[0,0],[pad_size,pad_size],[pad_size,pad_size],[0,0]])
+	inputs_pad = tf.pad(input_volume ,pad_mat)
 
 	print '    Layer  %2d : Type = Conv, Size = %d * %d, Stride = %d, Filters = %d, Input channels = %d' % (idx, kernel[0], kernel[1], stride, int(kernel[3]), int(kernel[2]))
-	with tf.variable_scope(name):
-		W = weight_init(kernel, 'W')
-		b = bias_init(kernel[3], 'b')
-		strides = [1,stride, stride, 1]
+	# with tf.variable_scope(name):
+	# W = weight_init(kernel, 'W')
+	# b = bias_init(kernel[3], 'b')
+	W = tf.Variable(tf.truncated_normal(kernel, stddev=0.1))
+	b = tf.Variable(tf.constant(0.1, shape=[kernel[3]]))	
+	strides = [1,stride, stride, 1]
 
-		conv = tf.nn.conv2d(input=input_volume, filter=W, strides=strides, padding='SAME')
-		final = conv+b
+	conv = tf.nn.conv2d(input=inputs_pad, filter=W, strides=strides, padding='VALID')
+	final = tf.add(conv, b)
 
-		# Apply leaky relu activation function with alpha as alpha
-		return tf.maximum(alpha*final, final)	
+	# Apply leaky relu activation function with alpha as alpha
+	return tf.maximum(alpha*final, final)	
 
 
 def max_pool(idx, input_volume, kernel=2, stride=2, name=None):
@@ -93,14 +99,16 @@ def fully_connected_linear(_input, _output):
 	shape = _input.get_shape()
 	input_units = int(shape[1])
 
-	W = weight_init([input_units, _output], 'W')
-	b = bias_init([_output], 'b')			
+	# W = weight_init([input_units, _output], 'W')
+	# b = bias_init([_output], 'b')			
+	W = tf.Variable(tf.truncated_normal([input_units, _output], stddev=0.1))
+	b = tf.Variable(tf.constant(0.1, shape=[_output]))
 
 	output = tf.add(tf.matmul(_input, W), b)
 	return output	
 
 
-def fully_connected(idx, _input, _output, name, alpha, activation=tf.nn.relu):
+def fully_connected(idx, _input, _output, name, alpha, activation=None):
 	
 	"""
 	Input:
@@ -117,12 +125,12 @@ def fully_connected(idx, _input, _output, name, alpha, activation=tf.nn.relu):
 		Returns the non-linear activations of the layer
 	"""
 	print '    Layer  %2d : Type = Full, Input dimension = %d, Output dimension = %d ' % (idx, int(_input.get_shape()[1]), _output)
-	with tf.variable_scope(name):
-		linear_output = fully_connected_linear(_input=_input, _output=_output)
+	# with tf.variable_scope(name):
+	linear_output = fully_connected_linear(_input=_input, _output=_output)
 
-		if activation is None:
-			return linear_output
-		else:
-			# Apply leaky relu activation function with alpha as alpha
-			return tf.maximum(alpha*linear_output, linear_output)	
+	if activation is None:
+		return linear_output
+	else:
+		# Apply leaky relu activation function with alpha as alpha
+		return tf.maximum(alpha*linear_output, linear_output)	
 	
