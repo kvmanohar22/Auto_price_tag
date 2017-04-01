@@ -25,7 +25,7 @@ class CNN:
 		# alpha used for leaky relu
 		self.options = Options()
 		self.alpha = alpha
-		self.threshold = 0.15
+		self.threshold = 0.5
 		self.iou_threshold = 0.5
 		self.classes = ["aeroplane", "bicycle", "bird", "boat", "bottle", "bus", "car", "cat", "chair", "cow", "diningtable", "dog", "horse", "motorbike", "person", "pottedplant", "sheep", "sofa", "train","tvmonitor"]
 		self.image_file = self.options.image_file
@@ -73,10 +73,10 @@ class CNN:
 		flat_shape = int(shape[1])*int(shape[2])*int(shape[3])
 		inputs_transposed = tf.transpose(self.conv_28, (0,3,1,2))
 		fully_flat = tf.reshape(inputs_transposed, [-1, flat_shape])		
-		self.fc_29 = model.fully_connected(29, fully_flat, 512, name='fc_29', alpha=self.alpha, activation=tf.nn.relu)
-		self.fc_30 = model.fully_connected(30, self.fc_29, 4096, name='fc_30', alpha=self.alpha, activation=tf.nn.relu)
+		# self.fc_29 = model.fully_connected(29, fully_flat, 512, name='fc_29', alpha=self.alpha, activation=tf.nn.relu)
+		self.fc_29 = model.fully_connected(30, fully_flat, 4096, name='fc_30', alpha=self.alpha, activation=tf.nn.relu)
 		# skip the dropout layer
-		self.fc_31 = model.fully_connected(31, self.fc_30, 1470, name='fc_31', alpha=self.alpha, activation=None)
+		self.fc_31 = model.fully_connected(31, self.fc_29, 1470, name='fc_31', alpha=self.alpha, activation=None)
  		
  		self.init_operation = tf.initialize_all_variables()
  		self.saver = tf.train.Saver()
@@ -118,8 +118,8 @@ class CNN:
 		"""
 		with tf.Session() as sess:
 			print 'Initializing the variables'
-			sess.run(self.init_operation)
-			checkpoint = self.options.checkpoint_dir+'YOLO_small.ckpt'																						
+			# sess.run(self.init_operation)
+			checkpoint = self.options.checkpoint_dir+'YOLO_full.ckpt'																						
 			print 'Restoring the saved model_architecture'
 			self.saver.restore(sess, checkpoint)
 			print 'Restored the model successfully from "{}"!!'.format(checkpoint)
@@ -248,4 +248,14 @@ class CNN:
 
 		return intersection / (box1[2]*box1[3] + box2[2]*box2[3] - intersection)
 
+	
+	def loss(self, ground_truth, pred_truth):
+		"""
+		Returns loss 
+
+		ground_truth : 
+
+		pred_truth : 
+
+		"""
 		

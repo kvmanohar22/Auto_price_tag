@@ -6,10 +6,7 @@ def main(args):
 	yolo = model.CNN(args.alpha)
 	
 	print 'Total parameters of the model are : ', yolo.count_params()
-	if args.t:
-		print 'Testing the model'
-		yolo.test(args.t)
-
+	yolo.test(args.t)
 
 
 def parser():
