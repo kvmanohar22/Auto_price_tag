@@ -21,7 +21,7 @@ def bias_init(shape, name=None):
 	return b
 
 
-def conv2d(idx, input_volume, kernel, name, alpha, stride=1):
+def conv2d(idx, input_volume, kernel, name, alpha, stride=1, is_training=True):
 	"""
 	Perform 2D convolutions
 
@@ -42,10 +42,6 @@ def conv2d(idx, input_volume, kernel, name, alpha, stride=1):
 	Output:
 		Returns the volume after 2D convolution operation
 	"""
-	pad_size = kernel[0]//2
-	pad_mat = np.array([[0,0],[pad_size,pad_size],[pad_size,pad_size],[0,0]])
-	inputs_pad = tf.pad(input_volume ,pad_mat)
-
 	print '    Layer  %2d : Type = Conv, Size = %d * %d, Stride = %d, Filters = %d, Input channels = %d' % (idx, kernel[0], kernel[1], stride, int(kernel[3]), int(kernel[2]))
 	# with tf.variable_scope(name):
 	# W = weight_init(kernel, 'W')
@@ -54,7 +50,7 @@ def conv2d(idx, input_volume, kernel, name, alpha, stride=1):
 	b = tf.Variable(tf.constant(0.1, shape=[kernel[3]]))	
 	strides = [1,stride, stride, 1]
 
-	conv = tf.nn.conv2d(input=inputs_pad, filter=W, strides=strides, padding='VALID')
+	conv = tf.nn.conv2d(input=input_volume, filter=W, strides=strides, padding='SAME')
 	final = tf.add(conv, b)
 
 	# Apply leaky relu activation function with alpha as alpha
@@ -108,7 +104,7 @@ def fully_connected_linear(_input, _output):
 	return output	
 
 
-def fully_connected(idx, _input, _output, name, alpha, activation=None):
+def fully_connected(idx, _input, _output, name, alpha, activation=None, is_training=True):
 	
 	"""
 	Input:

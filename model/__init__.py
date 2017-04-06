@@ -9,12 +9,13 @@ import os
 
 from options import Options
 import modules as model
+import utils as util
 
 np.set_printoptions(threshold=np.nan)
 
 class CNN:
 
-	def __init__(self, alpha):
+	def __init__(self, args):
 		"""
 		defines the architecture of the model
 		"""
@@ -24,62 +25,68 @@ class CNN:
 		"""
 		# alpha used for leaky relu
 		self.options = Options()
-		self.alpha = alpha
-		self.threshold = 0.5
-		self.iou_threshold = 0.5
+		self.alpha = args.a
+		self.threshold = args.tr
+		self.iou_threshold = args.itr
 		self.classes = ["aeroplane", "bicycle", "bird", "boat", "bottle", "bus", "car", "cat", "chair", "cow", "diningtable", "dog", "horse", "motorbike", "person", "pottedplant", "sheep", "sofa", "train","tvmonitor"]
 		self.image_file = self.options.image_file
 
 		# Input to the model
 		self.x = tf.placeholder(tf.float32, shape=[None, 448, 448, 3])
 
+		# Placeholders for calculating loss
+
+
 		# Stack the layers of the network
 		print "    Stacking layers of the network"
-		self.conv_01 = model.conv2d(1, self.x, kernel=[7,7,3,64], stride=2, name='conv_01', alpha=self.alpha)
+		self.conv_01 = model.conv2d(1, self.x, kernel=[7,7,3,64], stride=2, name='conv_01', alpha=self.alpha, is_training=True)
 		self.pool_02 = model.max_pool(2, self.conv_01, name='pool_02')
 
-		self.conv_03 = model.conv2d(3, self.pool_02, kernel=[3,3,64,192], stride=1, name='conv_03', alpha=self.alpha)
+		self.conv_03 = model.conv2d(3, self.pool_02, kernel=[3,3,64,192], stride=1, name='conv_03', alpha=self.alpha, is_training=True)
 		self.pool_04 = model.max_pool(4, self.conv_03, name='pool_04')
 
-		self.conv_05 = model.conv2d(5, self.pool_04, kernel=[1,1,192,128], stride=1, name='conv_05', alpha=self.alpha)
-		self.conv_06 = model.conv2d(6, self.conv_05, kernel=[3,3,128,256], stride=1, name='conv_06', alpha=self.alpha)
-		self.conv_07 = model.conv2d(7, self.conv_06, kernel=[1,1,256,256], stride=1, name='conv_07', alpha=self.alpha)
-		self.conv_08 = model.conv2d(8, self.conv_07, kernel=[3,3,256,512], stride=1, name='conv_08', alpha=self.alpha)
+		self.conv_05 = model.conv2d(5, self.pool_04, kernel=[1,1,192,128], stride=1, name='conv_05', alpha=self.alpha, is_training=True)
+		self.conv_06 = model.conv2d(6, self.conv_05, kernel=[3,3,128,256], stride=1, name='conv_06', alpha=self.alpha, is_training=True)
+		self.conv_07 = model.conv2d(7, self.conv_06, kernel=[1,1,256,256], stride=1, name='conv_07', alpha=self.alpha, is_training=True)
+		self.conv_08 = model.conv2d(8, self.conv_07, kernel=[3,3,256,512], stride=1, name='conv_08', alpha=self.alpha, is_training=True)
 		self.pool_09 = model.max_pool(9, self.conv_08, name='pool_09')
 
-		self.conv_10 = model.conv2d(10, self.pool_09, kernel=[1,1,512,256], stride=1, name='conv_10', alpha=self.alpha)
-		self.conv_11 = model.conv2d(11, self.conv_10, kernel=[3,3,256,512], stride=1, name='conv_11', alpha=self.alpha)
-		self.conv_12 = model.conv2d(12, self.conv_11, kernel=[1,1,512,256], stride=1, name='conv_12', alpha=self.alpha)
-		self.conv_13 = model.conv2d(13, self.conv_12, kernel=[3,3,256,512], stride=1, name='conv_13', alpha=self.alpha)
-		self.conv_14 = model.conv2d(14, self.conv_13, kernel=[1,1,512,256], stride=1, name='conv_14', alpha=self.alpha)
-		self.conv_15 = model.conv2d(15, self.conv_14, kernel=[3,3,256,512], stride=1, name='conv_15', alpha=self.alpha)
-		self.conv_16 = model.conv2d(16, self.conv_15, kernel=[1,1,512,256], stride=1, name='conv_16', alpha=self.alpha)
-		self.conv_17 = model.conv2d(17, self.conv_16, kernel=[3,3,256,512], stride=1, name='conv_17', alpha=self.alpha)
-		self.conv_18 = model.conv2d(18, self.conv_17, kernel=[1,1,512,512], stride=1, name='conv_18', alpha=self.alpha)
-		self.conv_19 = model.conv2d(19, self.conv_18, kernel=[3,3,512,1024],stride=1, name='conv_19', alpha=self.alpha)
+		self.conv_10 = model.conv2d(10, self.pool_09, kernel=[1,1,512,256], stride=1, name='conv_10', alpha=self.alpha, is_training=True)
+		self.conv_11 = model.conv2d(11, self.conv_10, kernel=[3,3,256,512], stride=1, name='conv_11', alpha=self.alpha, is_training=True)
+		self.conv_12 = model.conv2d(12, self.conv_11, kernel=[1,1,512,256], stride=1, name='conv_12', alpha=self.alpha, is_training=True)
+		self.conv_13 = model.conv2d(13, self.conv_12, kernel=[3,3,256,512], stride=1, name='conv_13', alpha=self.alpha, is_training=True)
+		self.conv_14 = model.conv2d(14, self.conv_13, kernel=[1,1,512,256], stride=1, name='conv_14', alpha=self.alpha, is_training=True)
+		self.conv_15 = model.conv2d(15, self.conv_14, kernel=[3,3,256,512], stride=1, name='conv_15', alpha=self.alpha, is_training=True)
+		self.conv_16 = model.conv2d(16, self.conv_15, kernel=[1,1,512,256], stride=1, name='conv_16', alpha=self.alpha, is_training=True)
+		self.conv_17 = model.conv2d(17, self.conv_16, kernel=[3,3,256,512], stride=1, name='conv_17', alpha=self.alpha, is_training=True)
+		self.conv_18 = model.conv2d(18, self.conv_17, kernel=[1,1,512,512], stride=1, name='conv_18', alpha=self.alpha, is_training=True)
+		self.conv_19 = model.conv2d(19, self.conv_18, kernel=[3,3,512,1024],stride=1, name='conv_19', alpha=self.alpha, is_training=True)
 		self.pool_20 = model.max_pool(20, self.conv_19, name='pool_20')
 
-		self.conv_21 = model.conv2d(21, self.pool_20, kernel=[1,1,1024,512],  stride=1, name='conv_21', alpha=self.alpha)
-		self.conv_22 = model.conv2d(22, self.conv_21, kernel=[3,3,512,1024],  stride=1, name='conv_22', alpha=self.alpha)
-		self.conv_23 = model.conv2d(23, self.conv_22, kernel=[1,1,1024,512],  stride=1, name='conv_23', alpha=self.alpha)
-		self.conv_24 = model.conv2d(24, self.conv_23, kernel=[3,3,512,1024],  stride=1, name='conv_24', alpha=self.alpha)
-		self.conv_25 = model.conv2d(25, self.conv_24, kernel=[3,3,1024,1024], stride=1, name='conv_25', alpha=self.alpha)
-		self.conv_26 = model.conv2d(26, self.conv_25, kernel=[3,3,1024,1024], stride=2, name='conv_26', alpha=self.alpha)
-		self.conv_27 = model.conv2d(27, self.conv_26, kernel=[3,3,1024,1024], stride=1, name='conv_27', alpha=self.alpha)
-		self.conv_28 = model.conv2d(28, self.conv_27, kernel=[3,3,1024,1024], stride=1, name='conv_28', alpha=self.alpha)
+		self.conv_21 = model.conv2d(21, self.pool_20, kernel=[1,1,1024,512],  stride=1, name='conv_21', alpha=self.alpha, is_training=True)
+		self.conv_22 = model.conv2d(22, self.conv_21, kernel=[3,3,512,1024],  stride=1, name='conv_22', alpha=self.alpha, is_training=True)
+		self.conv_23 = model.conv2d(23, self.conv_22, kernel=[1,1,1024,512],  stride=1, name='conv_23', alpha=self.alpha, is_training=True)
+		self.conv_24 = model.conv2d(24, self.conv_23, kernel=[3,3,512,1024],  stride=1, name='conv_24', alpha=self.alpha, is_training=True)
+		self.conv_25 = model.conv2d(25, self.conv_24, kernel=[3,3,1024,1024], stride=1, name='conv_25', alpha=self.alpha, is_training=True)
+		self.conv_26 = model.conv2d(26, self.conv_25, kernel=[3,3,1024,1024], stride=2, name='conv_26', alpha=self.alpha, is_training=True)
+		self.conv_27 = model.conv2d(27, self.conv_26, kernel=[3,3,1024,1024], stride=1, name='conv_27', alpha=self.alpha, is_training=True)
+		self.conv_28 = model.conv2d(28, self.conv_27, kernel=[3,3,1024,1024], stride=1, name='conv_28', alpha=self.alpha, is_training=True)
 
 		# Reshape 'self.conv_28' from 4D to 2D
 		shape = self.conv_28.get_shape().as_list()
 		flat_shape = int(shape[1])*int(shape[2])*int(shape[3])
 		inputs_transposed = tf.transpose(self.conv_28, (0,3,1,2))
-		fully_flat = tf.reshape(inputs_transposed, [-1, flat_shape])		
-		# self.fc_29 = model.fully_connected(29, fully_flat, 512, name='fc_29', alpha=self.alpha, activation=tf.nn.relu)
-		self.fc_29 = model.fully_connected(30, fully_flat, 4096, name='fc_30', alpha=self.alpha, activation=tf.nn.relu)
-		# skip the dropout layer
-		self.fc_31 = model.fully_connected(31, self.fc_29, 1470, name='fc_31', alpha=self.alpha, activation=None)
+		fully_flat = tf.reshape(inputs_transposed, [-1, flat_shape])
+
+		self.fc_29 = model.fully_connected(29, fully_flat, 512, name='fc_29', alpha=self.alpha, is_training=True, activation=tf.nn.relu)
+		self.fc_30 = model.fully_connected(30, self.fc_29, 4096, name='fc_30', alpha=self.alpha, is_training=True, activation=tf.nn.relu)
+		self.fc_31 = model.fully_connected(31, self.fc_30, 1470, name='fc_31', alpha=self.alpha, is_training=True, activation=None)
  		
- 		self.init_operation = tf.initialize_all_variables()
+ 		self.predictions = self.fc_31
+
+ 		self.init_operation = tf.global_variables_initializer()
  		self.saver = tf.train.Saver()
+ 		self.sess = tf.Session()
 
 	def model_variables(self):
 		architecture = ''
@@ -103,7 +110,30 @@ class CNN:
 		"""
 		train the model
 		"""
-		pass
+		self.utils   = util.Utilities(self.options.annotations_dir, self.classes, self.options)
+
+		# analyze some data
+		self.total_batches = self.utils.size // self.options.batch_size
+
+		# Restore the pre-trained model here
+		checkpoint = self.options.checkpoint_dir+'YOLO_small.ckpt'
+		self.saver.restore(self.sess, checkpoint)
+
+
+		for epoch in range(self.options.epochs):
+			epoch_loss    	  = 0.0
+			moving_loss	     = 0.0
+			batch_number  	  = 0
+			epoch_begin_time = time.time()
+
+			for batch_begin, batch_end in zip(xrange(0, self.total_batches, self.options.batch_size), 
+						xrange(self.options.batch_size, self.total_batches, self.options.batch_size)):
+				pass
+				# Evaluate loss here and do back-prop
+
+			print 'Epoch: %3d\tLoss: %3f\tMoving Loss: %3f\tTime: %3f' % (epoch+1, epoch_loss, moving_loss, time.time()-epoch_begin_time)
+
+
 
 	def validate(self):
 		"""
@@ -117,13 +147,11 @@ class CNN:
 		test the model
 		"""
 		with tf.Session() as sess:
-			print 'Initializing the variables'
-			# sess.run(self.init_operation)
-			checkpoint = self.options.checkpoint_dir+'YOLO_full.ckpt'																						
-			print 'Restoring the saved model_architecture'
+			checkpoint = self.options.checkpoint_dir+'YOLO_small.ckpt'																						
 			self.saver.restore(sess, checkpoint)
 			print 'Restored the model successfully from "{}"!!'.format(checkpoint)
 
+			print '\nFollowing are the detected objects in the image "{}"'.format(test_image)
 			img = cv2.imread(test_image)
 			s = time.time()
 			
@@ -138,10 +166,10 @@ class CNN:
 			inputs = np.zeros((1,448,448,3),dtype='float32')
 			inputs[0] = (img_resized_np/255.0)*2.0-1.0
 
-			print '\nDoing the forward pass over the network'
 			net_output = sess.run(self.fc_31, feed_dict={self.x : inputs})
 			self.result = self.interpret_output(net_output[0])
 			self.show_results(img, self.result)
+			print '\nTotal time taken : {}'.format(time.time()-s)
 
 	def interpret_output(self, output):
 		
@@ -230,12 +258,11 @@ class CNN:
 			
 			print '    class : ' + results[i][0] + ' , [x,y,w,h]=[' + str(x) + ',' + str(y) + ',' + str(int(results[i][3])) + ',' + str(int(results[i][4]))+'], Confidence = ' + str(results[i][5])
 			cv2.rectangle(img_cp, (x-w,y-h), (x+w,y+h), (0,255,0), 2)
-			cv2.rectangle(img_cp, (x-w,y-h-20), (x+w,y-h), (125,125,125), -1)
 			cv2.putText(img_cp, results[i][0] + ' : %.2f' % results[i][5], (x-w+5,y-h-7), cv2.FONT_ITALIC, 0.5, (0,0,0), 1)
 			
 		cv2.imwrite(self.image_file, img_cp)			
-		cv2.imshow('YOLO detection', img_cp)
-		cv2.waitKey(0)
+		cv2.imshow('Price Prediction', img_cp)
+		cv2.waitKey(5000)
 
 
 	def iou(self, box1, box2):

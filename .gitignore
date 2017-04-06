@@ -90,3 +90,10 @@ ENV/
 
 *~
 *.ppm
+
+# tensorflow checkpoint files
+*.ckpt
+
+# Datasets
+Dataset/Annotations/
+Dataset/Images/
