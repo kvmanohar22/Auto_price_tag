@@ -1,3 +1,4 @@
+import tensorflow.contrib.slim as slim
 import matplotlib.pyplot as plt
 import tensorflow as tf
 import pandas as pd
@@ -32,14 +33,12 @@ class CNN:
 		self.image_file = self.options.image_file
 
 		# Input to the model
-		self.x = tf.placeholder(tf.float32, shape=[None, 448, 448, 3])
-
-		# Placeholders for calculating loss
-
-
+		self.x = tf.placeholder(tf.float32, shape=[None, self.options.img_x*self.options.img_y*3])
+		input_data = tf.reshape(self.x, [-1, self.options.img_x, self.options.img_y, 3])
+		
 		# Stack the layers of the network
 		print "    Stacking layers of the network"
-		self.conv_01 = model.conv2d(1, self.x, kernel=[7,7,3,64], stride=2, name='conv_01', alpha=self.alpha, is_training=True)
+		self.conv_01 = model.conv2d(1, input_data, kernel=[7,7,3,64], stride=2, name='conv_01', alpha=self.alpha, is_training=True)
 		self.pool_02 = model.max_pool(2, self.conv_01, name='pool_02')
 
 		self.conv_03 = model.conv2d(3, self.pool_02, kernel=[3,3,64,192], stride=1, name='conv_03', alpha=self.alpha, is_training=True)
@@ -88,6 +87,10 @@ class CNN:
  		self.saver = tf.train.Saver()
  		self.sess = tf.Session()
 
+ 		# Build the loss operation
+ 		self.loss(self.predictions)
+ 		self.optimizer = tf.train.AdamOptimizer(learning_rate=self.options.learning_rate).minimize(self._loss)
+
 	def model_variables(self):
 		architecture = ''
 		for variable in tf.trainable_variables():
@@ -118,6 +121,7 @@ class CNN:
 		# Restore the pre-trained model here
 		checkpoint = self.options.checkpoint_dir+'YOLO_small.ckpt'
 		self.saver.restore(self.sess, checkpoint)
+		print 'Successfully restored the saved model !'
 
 
 		for epoch in range(self.options.epochs):
@@ -126,12 +130,16 @@ class CNN:
 			batch_number  	  = 0
 			epoch_begin_time = time.time()
 
-			for batch_begin, batch_end in zip(xrange(0, self.total_batches, self.options.batch_size), 
-						xrange(self.options.batch_size, self.total_batches, self.options.batch_size)):
-				pass
+			for batch_begin, batch_end in zip(xrange(0, self.utils.size+1, self.options.batch_size), 
+						xrange(self.options.batch_size, self.utils.size+1, self.options.batch_size)):
+				
+				# Load chunk of data here
+				# This includes both the image data and their corresponding annotations
+				images = self.utils.load_data(self.options.dataset_dir, self.options.ann_parsed_file, batch_begin, batch_end, batch_begin==0)
+
 				# Evaluate loss here and do back-prop
 
-			print 'Epoch: %3d\tLoss: %3f\tMoving Loss: %3f\tTime: %3f' % (epoch+1, epoch_loss, moving_loss, time.time()-epoch_begin_time)
+			print 'Epoch: %3d\tLoss: %3f\tMoving Loss: %3f\tTime: %3f\n' % (epoch+1, epoch_loss, moving_loss, time.time()-epoch_begin_time)
 
 
 
@@ -276,13 +284,72 @@ class CNN:
 		return intersection / (box1[2]*box1[3] + box2[2]*box2[3] - intersection)
 
 	
-	def loss(self, ground_truth, pred_truth):
+	def loss(self, net_out):
 		"""
-		Returns loss 
-
-		ground_truth : 
-
-		pred_truth : 
-
+			Calculate loss given predicted values and ground truth
 		"""
-		
+
+		sprob = 1.
+		sconf = 1.
+		snoob = 0.5
+		scoor = 5.
+
+		# grid details
+		S = self.options.S
+		C = self.options.C
+		B = self.options.B
+
+		# number of grid cells
+		SS = S * S 
+
+		# placeholders for loss operation
+		_probs = tf.placeholder(tf.float32, [None, SS, C])
+		_confs = tf.placeholder(tf.float32, [None, SS, B])	
+		_coord = tf.placeholder(tf.float32, [None, SS, B, 4])
+
+		# L2 Loss
+		_proid  = tf.placeholder(tf.float32, [None, SS, C])
+
+		# IOU
+		_areas  	 = tf.placeholder(tf.float32, [None, SS, B])
+		_upleft 	 = tf.placeholder(tf.float32, [None, SS, B, 2])
+		_botright = tf.placeholder(tf.float32, [None, SS, B, 2])
+
+		coords = net_out[:, SS * (C + B):]
+		coords = tf.reshape(coords, [-1, SS, B, 4])
+		wh = tf.pow(coords[:,:,:,2:4], 2) * S # unit: grid cell
+		area_pred = wh[:,:,:,0] * wh[:,:,:,1] # unit: grid cell^2
+		centers = coords[:,:,:,0:2] # [batch, SS, B, 2]
+		floor = centers - (wh * .5) # [batch, SS, B, 2]
+		ceil  = centers + (wh * .5) # [batch, SS, B, 2]
+
+		intersect_upleft   = tf.maximum(floor, _upleft)
+		intersect_botright = tf.minimum(ceil , _botright)
+		intersect_wh = intersect_botright - intersect_upleft
+		intersect_wh = tf.maximum(intersect_wh, 0.0)
+		intersect = tf.multiply(intersect_wh[:,:,:,0], intersect_wh[:,:,:,1])
+
+		iou = tf.truediv(intersect, _areas + area_pred - intersect)
+		best_box = tf.equal(iou, tf.reduce_max(iou, [2], True))
+		best_box = tf.to_float(best_box)
+		confs = tf.multiply(best_box, _confs)
+
+		conid = snoob * (1. - confs) + sconf * confs
+		weight_coo = tf.concat(4 * [tf.expand_dims(confs, -1)], 3)
+		cooid = scoor * weight_coo
+		proid = sprob * _proid
+
+		probs = slim.flatten(_probs)
+		proid = slim.flatten(proid)
+		confs = slim.flatten(confs)
+		conid = slim.flatten(conid)
+		coord = slim.flatten(_coord)
+		cooid = slim.flatten(cooid)
+
+		true = tf.concat([probs, confs, coord], 1)
+		wght = tf.concat([proid, conid, cooid], 1)
+		true = tf.concat([true, wght], 1)
+
+		loss = tf.pow(net_out - true, 2)
+		loss = tf.reduce_sum(loss, 1)
+		self._loss = .5 * tf.reduce_mean(loss)
