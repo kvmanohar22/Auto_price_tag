@@ -46,11 +46,16 @@ def conv2d(idx, input_volume, kernel, name, alpha, stride=1, is_training=True):
 	# with tf.variable_scope(name):
 	# W = weight_init(kernel, 'W')
 	# b = bias_init(kernel[3], 'b')
+	
+	pad_size = kernel[0]//2
+	pad_mat = np.array([[0,0],[pad_size,pad_size],[pad_size,pad_size],[0,0]])
+	inputs_pad = tf.pad(input_volume ,pad_mat)
+
 	W = tf.Variable(tf.truncated_normal(kernel, stddev=0.1))
 	b = tf.Variable(tf.constant(0.1, shape=[kernel[3]]))	
 	strides = [1,stride, stride, 1]
 
-	conv = tf.nn.conv2d(input=input_volume, filter=W, strides=strides, padding='SAME')
+	conv = tf.nn.conv2d(input=inputs_pad, filter=W, strides=strides, padding='VALID')
 	final = tf.add(conv, b)
 
 	# Apply leaky relu activation function with alpha as alpha

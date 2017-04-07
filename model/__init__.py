@@ -89,7 +89,7 @@ class CNN:
 
  		# Build the loss operation
  		self.loss(self.predictions)
- 		self.optimizer = tf.train.AdamOptimizer(learning_rate=self.options.learning_rate).minimize(self._loss)
+ 		self.optimizer = tf.train.AdamOptimizer(learning_rate=self.options.learning_rate).minimize(-self._loss)
 
 	def model_variables(self):
 		architecture = ''
@@ -122,11 +122,10 @@ class CNN:
 		checkpoint = self.options.checkpoint_dir+'YOLO_small.ckpt'
 		self.saver.restore(self.sess, checkpoint)
 		print 'Successfully restored the saved model !'
+		moving_loss=-1.0
 
-
-		for epoch in range(self.options.epochs):
+		for epoch in xrange(self.options.epochs):
 			epoch_loss    	  = 0.0
-			moving_loss	     = 0.0
 			batch_number  	  = 0
 			epoch_begin_time = time.time()
 
@@ -135,20 +134,22 @@ class CNN:
 				
 				# Load chunk of data here
 				# This includes both the image data and their corresponding annotations
-				images = self.utils.load_data(self.options.dataset_dir, self.options.ann_parsed_file, batch_begin, batch_end, batch_begin==0)
+				images, loss_feed = self.utils.load_data(self.options.dataset_dir, self.options.ann_parsed_file, batch_begin, batch_end, batch_begin==0)
 
 				# Evaluate loss here and do back-prop
+				feed_dict = {self.loss_feed_dict[key]: loss_feed[key] for key in self.loss_feed_dict}
+				feed_dict[self.x] = images
 
-			print 'Epoch: %3d\tLoss: %3f\tMoving Loss: %3f\tTime: %3f\n' % (epoch+1, epoch_loss, moving_loss, time.time()-epoch_begin_time)
+				_, _loss = self.sess.run([self.predictions, self._loss], feed_dict=feed_dict)
 
+				if moving_loss == -1.0:
+					moving_loss = _loss
+				moving_loss = 0.9 * moving_loss + 0.1 * _loss
 
-
-	def validate(self):
-		"""
-		validate the model
-		"""
-		pass
-
+			
+			print 'Epoch: %3d\tMoving Loss: %3f\tTime: %3f' % (epoch+1, moving_loss, time.time()-epoch_begin_time)
+		saved_dir = self.saver.save(self.sess, new_ckpt_dir+'model.ckpt')
+			
 
 	def test(self, test_image):
 		"""
@@ -171,8 +172,10 @@ class CNN:
 			img_resized = cv2.resize(img, (448, 448))
 			img_RGB = cv2.cvtColor(img_resized,cv2.COLOR_BGR2RGB)
 			img_resized_np = np.asarray( img_RGB )
-			inputs = np.zeros((1,448,448,3),dtype='float32')
+			img_resized_np = img_resized_np.reshape(1, 448*448*3)
+			inputs = np.zeros((1, 448*448*3), dtype='float32')
 			inputs[0] = (img_resized_np/255.0)*2.0-1.0
+
 
 			net_output = sess.run(self.fc_31, feed_dict={self.x : inputs})
 			self.result = self.interpret_output(net_output[0])
@@ -315,6 +318,10 @@ class CNN:
 		_upleft 	 = tf.placeholder(tf.float32, [None, SS, B, 2])
 		_botright = tf.placeholder(tf.float32, [None, SS, B, 2])
 
+
+		self.loss_feed_dict = {'probs':_probs, 'confs': _confs, 'coord':_coord, 'proid':_proid, 
+									  'areas':_areas, 'upleft':_upleft, 'botright':_botright}
+
 		coords = net_out[:, SS * (C + B):]
 		coords = tf.reshape(coords, [-1, SS, B, 4])
 		wh = tf.pow(coords[:,:,:,2:4], 2) * S # unit: grid cell
@@ -348,8 +355,8 @@ class CNN:
 
 		true = tf.concat([probs, confs, coord], 1)
 		wght = tf.concat([proid, conid, cooid], 1)
-		true = tf.concat([true, wght], 1)
 
 		loss = tf.pow(net_out - true, 2)
+		loss = tf.multiply(loss, wght)
 		loss = tf.reduce_sum(loss, 1)
 		self._loss = .5 * tf.reduce_mean(loss)

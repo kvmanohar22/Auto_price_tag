@@ -21,3 +21,18 @@ class Options:
 		self.ckpt_after      = 99		# checkpoint after these many epochs 
 		self.iou_threshold   = 0.5		# iou threshold
 		self.det_threshold   = 0.15   # detection threshold 
+
+		# Loss function's target values
+		self.H = 7		 	# output shape of the grid along x
+		self.W = 7		 	# output shape of the grid along y
+		self.C = 20		 	# number of classes (actual YOLO has 20 classes)
+		self.B = 2 		 	# number of bounding boxes generated per grid cell
+		self.S = 7 			# SxS grid cell is generated for YOLO-v1 but is different in case of
+								# YOLO-v2
+
+		# Misc
+		self.img_x = 448
+		self.img_y = 448
+
+		# Labels
+		self.labels = ["aeroplane", "bicycle", "bird", "boat", "bottle", "bus", "car", "cat", "chair", "cow", "diningtable", "dog", "horse", "motorbike", "person", "pottedplant", "sheep", "sofa", "train","tvmonitor"]
