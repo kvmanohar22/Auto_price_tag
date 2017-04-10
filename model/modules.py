@@ -51,8 +51,8 @@ def conv2d(idx, input_volume, kernel, name, alpha, stride=1, is_training=True):
 	pad_mat = np.array([[0,0],[pad_size,pad_size],[pad_size,pad_size],[0,0]])
 	inputs_pad = tf.pad(input_volume ,pad_mat)
 
-	W = tf.Variable(tf.truncated_normal(kernel, stddev=0.1))
-	b = tf.Variable(tf.constant(0.1, shape=[kernel[3]]))	
+	W = tf.Variable(tf.truncated_normal(kernel, stddev=0.1), trainable=is_training)
+	b = tf.Variable(tf.constant(0.1, shape=[kernel[3]]), trainable=is_training)	
 	strides = [1,stride, stride, 1]
 
 	conv = tf.nn.conv2d(input=inputs_pad, filter=W, strides=strides, padding='VALID')
@@ -81,7 +81,7 @@ def max_pool(idx, input_volume, kernel=2, stride=2, name=None):
 	return max_pool
 
 
-def fully_connected_linear(_input, _output):
+def fully_connected_linear(_input, _output, is_training):
 	"""
 	Input:
 		_input : 
@@ -102,8 +102,8 @@ def fully_connected_linear(_input, _output):
 
 	# W = weight_init([input_units, _output], 'W')
 	# b = bias_init([_output], 'b')			
-	W = tf.Variable(tf.truncated_normal([input_units, _output], stddev=0.1))
-	b = tf.Variable(tf.constant(0.1, shape=[_output]))
+	W = tf.Variable(tf.truncated_normal([input_units, _output], stddev=0.1), trainable=is_training)
+	b = tf.Variable(tf.constant(0.1, shape=[_output]), trainable=is_training)
 
 	output = tf.add(tf.matmul(_input, W), b)
 	return output	
@@ -127,7 +127,7 @@ def fully_connected(idx, _input, _output, name, alpha, activation=None, is_train
 	"""
 	print '    Layer  %2d : Type = Full, Input dimension = %d, Output dimension = %d ' % (idx, int(_input.get_shape()[1]), _output)
 	# with tf.variable_scope(name):
-	linear_output = fully_connected_linear(_input=_input, _output=_output)
+	linear_output = fully_connected_linear(_input=_input, _output=_output, is_training=is_training)
 
 	if activation is None:
 		return linear_output

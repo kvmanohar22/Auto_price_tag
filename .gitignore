@@ -95,5 +95,10 @@ ENV/
 *.ckpt
 
 # Datasets
-Dataset/Annotations/
+Dataset/Labels/
+Dataset/training_list.txt
 Dataset/Images/
+*.ipynb
+ckpt/
+pred/
+*.swp

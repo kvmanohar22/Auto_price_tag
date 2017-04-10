@@ -9,7 +9,7 @@ class Options:
 		self.checkpoint_dir 	= '/home/kv/Git/Auto_price_tag/'
 		self.new_ckpt_dir 	= '/home/kv/Git/Auto_price_tag/ckpt/'
 		self.image_file 		= '/home/kv/Git/Auto_price_tag/pred/predictions.png'
-		self.annotations_dir = '/home/kv/Git/Auto_price_tag/Dataset/Annotations/'
+		self.annotations_dir = '/home/kv/Git/Auto_price_tag/Dataset/Labels/'
 		self.dataset_dir     = '/home/kv/Git/Auto_price_tag/Dataset/Images/'
 		self.ann_parsed_file = '/home/kv/Git/Auto_price_tag/Dataset/Ann.parsed'
 
@@ -29,6 +29,8 @@ class Options:
 		self.B = 2 		 	# number of bounding boxes generated per grid cell
 		self.S = 7 			# SxS grid cell is generated for YOLO-v1 but is different in case of
 								# YOLO-v2
+		self.O = (self.C + self.B * 5) * self.S * self.S 
+								# Output tensor shape of the model
 
 		# Misc
 		self.img_x = 448
@@ -36,3 +38,5 @@ class Options:
 
 		# Labels
 		self.labels = ["aeroplane", "bicycle", "bird", "boat", "bottle", "bus", "car", "cat", "chair", "cow", "diningtable", "dog", "horse", "motorbike", "person", "pottedplant", "sheep", "sofa", "train","tvmonitor"]
+		self.custom_labels = ["gulab_jamun", "mango_sandesh", "sandesh", "doda", "laddu", "kaaju_katli"]
+		self.save_ckpt_after = 5

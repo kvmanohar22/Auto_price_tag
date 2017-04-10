@@ -21,7 +21,7 @@ def pascal_voc_clean_xml(ANN, pick):
 	annotations = [file for file in annotations if '.xml' in file]
 	size = len(os.listdir(ANN))
 
-	for i, file in enumerate(annotations):		
+	for i, file in enumerate(annotations):
 
 		with open(os.path.join(ANN, file), 'r') as f:
 			lines = f.readlines()

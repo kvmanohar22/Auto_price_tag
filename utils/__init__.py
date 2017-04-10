@@ -8,6 +8,7 @@ import os
 
 import options as _opt
 from utils import xml_parser as parser
+from utils import simple_parser as parser2
 
 class Utilities(object):
 
@@ -31,8 +32,8 @@ class Utilities(object):
 			self.size  = len(self.dumps)
 			return
 
-		print 'Parsing the annotations'
-		self.dumps = parser.pascal_voc_clean_xml(annotations_dir, labels_list)
+		print 'Parsing the annotations for the first time'
+		self.dumps = parser2.simple_parser(annotations_dir, labels_list)
 		self.size = len(self.dumps)
 		with open(opt.ann_parsed_file, 'wb') as file:
 			pickle.dump([self.dumps], file)
