@@ -49,7 +49,7 @@
     	<div class="row">
 	       <?php 
 	       	//scan "uploads" folder and display them accordingly
-	       $folder = "uploads";
+	       $folder = "/opt/lampp/htdocs/sweet/uploads";
 	       $results = scandir('uploads');
 	       foreach ($results as $result) {
 	       	if ($result === '.' or $result === '..') continue;

@@ -2,6 +2,7 @@ from copy import deepcopy
 import pandas as pd
 import numpy as np
 import scipy.misc
+import cv2
 import pickle
 import time
 import os
@@ -70,7 +71,7 @@ class Utilities(object):
 			image_idx.append(self.dumps[idx][0])
 			image_w.append(self.dumps[idx][1][0])
 			image_h.append(self.dumps[idx][1][1])
-			_allobjs.append(self.dumps[idx][1][2][0])
+			_allobjs.append(self.dumps[idx][1][2])
 
 		image_h = np.array(image_h)
 		image_w = np.array(image_w)
@@ -79,11 +80,12 @@ class Utilities(object):
 		# Read the corresponding images
 		final_image_set = np.zeros((self.opt.batch_size, self.opt.img_x*self.opt.img_y*3))
 		for idx, img in enumerate(image_idx):
-			image = scipy.misc.imread(os.path.join(Images_dir, img))
+			image = cv2.imread(os.path.join(Images_dir, img))
+			image = cv2.cvtColor(image, cv2.COLOR_BGR2RGB)
 			resized_img = scipy.misc.imresize(image, (self.opt.img_x, self.opt.img_y))
 			resized_img = resized_img[:, :, ::-1]
 			reshape_img = resized_img.reshape((1, self.opt.img_x*self.opt.img_y*3))
-			reshape_img = reshape_img / 255.0
+			reshape_img = (reshape_img / 255.0) * 2.0 - 1.0
 			final_image_set[idx] = reshape_img
 
 		# print 'Loaded {} image(s) in {} sec'.format(len(image_idx), time.time()-begin_time)
@@ -92,7 +94,7 @@ class Utilities(object):
 		S = self.opt.S
 		C = self.opt.C
 		B = self.opt.B
-		labels = self.opt.labels
+		labels = self.opt.custom_labels
 		w = image_w[0]
 		h = image_h[0]
 

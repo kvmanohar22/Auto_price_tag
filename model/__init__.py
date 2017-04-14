@@ -22,50 +22,53 @@ class CNN:
 		"""
 		self.options = Options()
 		self.alpha = args.a
-		self.threshold = args.tr
-		self.iou_threshold = args.itr
+		self.threshold = self.options.det_threshold
+		self.iou_threshold = self.options.iou_threshold
+		# self.classes = self.options.custom_labels
 		self.classes = self.options.custom_labels
 		self.image_file = self.options.image_file
+		self.learning_rate = self.options.learning_rate
 
 		# Input to the model
 		self.x = tf.placeholder(tf.float32, shape=[None, self.options.img_x*self.options.img_y*3])
+		self.lr = tf.placeholder(tf.float32)
 		input_data = tf.reshape(self.x, [-1, self.options.img_x, self.options.img_y, 3])
 		self.utils   = util.Utilities(self.options.annotations_dir, self.classes, self.options)
 
 		# Stack the layers of the network
 		print "    Stacking layers of the network"
-		self.conv_01 = model.conv2d(1, input_data, kernel=[7,7,3,64], stride=2, name='conv_01', alpha=self.alpha, is_training=False)
+		self.conv_01 = model.conv2d(1, input_data, kernel=[7,7,3,64], stride=2, name='conv_01', alpha=self.alpha, is_training=True)
 		self.pool_02 = model.max_pool(2, self.conv_01, name='pool_02')
 
-		self.conv_03 = model.conv2d(3, self.pool_02, kernel=[3,3,64,192], stride=1, name='conv_03', alpha=self.alpha, is_training=False)
+		self.conv_03 = model.conv2d(3, self.pool_02, kernel=[3,3,64,192], stride=1, name='conv_03', alpha=self.alpha, is_training=True)
 		self.pool_04 = model.max_pool(4, self.conv_03, name='pool_04')
 
-		self.conv_05 = model.conv2d(5, self.pool_04, kernel=[1,1,192,128], stride=1, name='conv_05', alpha=self.alpha, is_training=False)
-		self.conv_06 = model.conv2d(6, self.conv_05, kernel=[3,3,128,256], stride=1, name='conv_06', alpha=self.alpha, is_training=False)
-		self.conv_07 = model.conv2d(7, self.conv_06, kernel=[1,1,256,256], stride=1, name='conv_07', alpha=self.alpha, is_training=False)
-		self.conv_08 = model.conv2d(8, self.conv_07, kernel=[3,3,256,512], stride=1, name='conv_08', alpha=self.alpha, is_training=False)
+		self.conv_05 = model.conv2d(5, self.pool_04, kernel=[1,1,192,128], stride=1, name='conv_05', alpha=self.alpha, is_training=True)
+		self.conv_06 = model.conv2d(6, self.conv_05, kernel=[3,3,128,256], stride=1, name='conv_06', alpha=self.alpha, is_training=True)
+		self.conv_07 = model.conv2d(7, self.conv_06, kernel=[1,1,256,256], stride=1, name='conv_07', alpha=self.alpha, is_training=True)
+		self.conv_08 = model.conv2d(8, self.conv_07, kernel=[3,3,256,512], stride=1, name='conv_08', alpha=self.alpha, is_training=True)
 		self.pool_09 = model.max_pool(9, self.conv_08, name='pool_09')
 
-		self.conv_10 = model.conv2d(10, self.pool_09, kernel=[1,1,512,256], stride=1, name='conv_10', alpha=self.alpha, is_training=False)
-		self.conv_11 = model.conv2d(11, self.conv_10, kernel=[3,3,256,512], stride=1, name='conv_11', alpha=self.alpha, is_training=False)
-		self.conv_12 = model.conv2d(12, self.conv_11, kernel=[1,1,512,256], stride=1, name='conv_12', alpha=self.alpha, is_training=False)
-		self.conv_13 = model.conv2d(13, self.conv_12, kernel=[3,3,256,512], stride=1, name='conv_13', alpha=self.alpha, is_training=False)
-		self.conv_14 = model.conv2d(14, self.conv_13, kernel=[1,1,512,256], stride=1, name='conv_14', alpha=self.alpha, is_training=False)
-		self.conv_15 = model.conv2d(15, self.conv_14, kernel=[3,3,256,512], stride=1, name='conv_15', alpha=self.alpha, is_training=False)
-		self.conv_16 = model.conv2d(16, self.conv_15, kernel=[1,1,512,256], stride=1, name='conv_16', alpha=self.alpha, is_training=False)
-		self.conv_17 = model.conv2d(17, self.conv_16, kernel=[3,3,256,512], stride=1, name='conv_17', alpha=self.alpha, is_training=False)
-		self.conv_18 = model.conv2d(18, self.conv_17, kernel=[1,1,512,512], stride=1, name='conv_18', alpha=self.alpha, is_training=False)
-		self.conv_19 = model.conv2d(19, self.conv_18, kernel=[3,3,512,1024],stride=1, name='conv_19', alpha=self.alpha, is_training=False)
+		self.conv_10 = model.conv2d(10, self.pool_09, kernel=[1,1,512,256], stride=1, name='conv_10', alpha=self.alpha, is_training=True)
+		self.conv_11 = model.conv2d(11, self.conv_10, kernel=[3,3,256,512], stride=1, name='conv_11', alpha=self.alpha, is_training=True)
+		self.conv_12 = model.conv2d(12, self.conv_11, kernel=[1,1,512,256], stride=1, name='conv_12', alpha=self.alpha, is_training=True)
+		self.conv_13 = model.conv2d(13, self.conv_12, kernel=[3,3,256,512], stride=1, name='conv_13', alpha=self.alpha, is_training=True)
+		self.conv_14 = model.conv2d(14, self.conv_13, kernel=[1,1,512,256], stride=1, name='conv_14', alpha=self.alpha, is_training=True)
+		self.conv_15 = model.conv2d(15, self.conv_14, kernel=[3,3,256,512], stride=1, name='conv_15', alpha=self.alpha, is_training=True)
+		self.conv_16 = model.conv2d(16, self.conv_15, kernel=[1,1,512,256], stride=1, name='conv_16', alpha=self.alpha, is_training=True)
+		self.conv_17 = model.conv2d(17, self.conv_16, kernel=[3,3,256,512], stride=1, name='conv_17', alpha=self.alpha, is_training=True)
+		self.conv_18 = model.conv2d(18, self.conv_17, kernel=[1,1,512,512], stride=1, name='conv_18', alpha=self.alpha, is_training=True)
+		self.conv_19 = model.conv2d(19, self.conv_18, kernel=[3,3,512,1024],stride=1, name='conv_19', alpha=self.alpha, is_training=True)
 		self.pool_20 = model.max_pool(20, self.conv_19, name='pool_20')
 
-		self.conv_21 = model.conv2d(21, self.pool_20, kernel=[1,1,1024,512],  stride=1, name='conv_21', alpha=self.alpha, is_training=False)
-		self.conv_22 = model.conv2d(22, self.conv_21, kernel=[3,3,512,1024],  stride=1, name='conv_22', alpha=self.alpha, is_training=False)
-		self.conv_23 = model.conv2d(23, self.conv_22, kernel=[1,1,1024,512],  stride=1, name='conv_23', alpha=self.alpha, is_training=False)
-		self.conv_24 = model.conv2d(24, self.conv_23, kernel=[3,3,512,1024],  stride=1, name='conv_24', alpha=self.alpha, is_training=False)
-		self.conv_25 = model.conv2d(25, self.conv_24, kernel=[3,3,1024,1024], stride=1, name='conv_25', alpha=self.alpha, is_training=False)
-		self.conv_26 = model.conv2d(26, self.conv_25, kernel=[3,3,1024,1024], stride=2, name='conv_26', alpha=self.alpha, is_training=False)
-		self.conv_27 = model.conv2d(27, self.conv_26, kernel=[3,3,1024,1024], stride=1, name='conv_27', alpha=self.alpha, is_training=False)
-		self.conv_28 = model.conv2d(28, self.conv_27, kernel=[3,3,1024,1024], stride=1, name='conv_28', alpha=self.alpha, is_training=False)
+		self.conv_21 = model.conv2d(21, self.pool_20, kernel=[1,1,1024,512],  stride=1, name='conv_21', alpha=self.alpha, is_training=True)
+		self.conv_22 = model.conv2d(22, self.conv_21, kernel=[3,3,512,1024],  stride=1, name='conv_22', alpha=self.alpha, is_training=True)
+		self.conv_23 = model.conv2d(23, self.conv_22, kernel=[1,1,1024,512],  stride=1, name='conv_23', alpha=self.alpha, is_training=True)
+		self.conv_24 = model.conv2d(24, self.conv_23, kernel=[3,3,512,1024],  stride=1, name='conv_24', alpha=self.alpha, is_training=True)
+		self.conv_25 = model.conv2d(25, self.conv_24, kernel=[3,3,1024,1024], stride=1, name='conv_25', alpha=self.alpha, is_training=True)
+		self.conv_26 = model.conv2d(26, self.conv_25, kernel=[3,3,1024,1024], stride=2, name='conv_26', alpha=self.alpha, is_training=True)
+		self.conv_27 = model.conv2d(27, self.conv_26, kernel=[3,3,1024,1024], stride=1, name='conv_27', alpha=self.alpha, is_training=True)
+		self.conv_28 = model.conv2d(28, self.conv_27, kernel=[3,3,1024,1024], stride=1, name='conv_28', alpha=self.alpha, is_training=True)
 
 		# Reshape 'self.conv_28' from 4D to 2D
 		shape = self.conv_28.get_shape().as_list()
@@ -75,17 +78,36 @@ class CNN:
 
 		self.fc_29 = model.fully_connected(29, fully_flat, 512, name='fc_29', alpha=self.alpha, is_training=True, activation=tf.nn.relu)
 		self.fc_30 = model.fully_connected(30, self.fc_29, 4096, name='fc_30', alpha=self.alpha, is_training=True, activation=tf.nn.relu)
-		self.fc_31 = model.fully_connected(31, self.fc_30, self.options.O, name='fc_31', alpha=self.alpha, is_training=True, activation=None)
+		self.fc_31 = model.fully_connected(31, self.fc_30, 1470, name='fc_31', alpha=self.alpha, is_training=True, activation=None)
+		self.fc_32 = model.fully_connected(32, self.fc_30, self.options.O, name='fc_32', alpha=self.alpha, is_training=True, activation=None)
  		
- 		self.predictions = self.fc_31
+ 		self.predictions = self.fc_32
 
- 		self.init_operation = tf.global_variables_initializer()
- 		self.saver = tf.train.Saver()
+ 		all_vars = tf.global_variables()
+
+ 		# initialize these variables with random weights
+ 		var_to_init = []
+ 		for var in all_vars[1:]:
+ 			if int(str(var.name).split('_')[1].split(':')[0])>=54:
+ 				var_to_init.append(var)
+
+ 		# restore the weights of these variables
+ 		var_to_restore = []
+ 		for var in all_vars:
+ 			if len(str(var.name).split('_'))==1:
+ 				var_to_restore.append(var)
+ 				continue
+ 			elif int(str(var.name).split('_')[1].split(':')[0])<=53:
+				var_to_restore.append(var)	
+
+ 		self.init_operation = tf.variables_initializer(var_to_init)
+ 		self.saver1 = tf.train.Saver(var_to_restore)
+ 		self.saver2 = tf.train.Saver()
  		self.sess = tf.Session()
 
  		# Build the loss operation
  		self.loss(self.predictions)
- 		self.optimizer = tf.train.AdamOptimizer(learning_rate=self.options.learning_rate).minimize(-self._loss)
+ 		self.optimizer = tf.train.AdamOptimizer(learning_rate=self.learning_rate).minimize(self._loss)
 
 	def model_variables(self):
 		architecture = ''
@@ -114,7 +136,8 @@ class CNN:
 
 		# Restore the pre-trained model here
 		checkpoint = os.path.join(self.options.checkpoint_dir, 'YOLO_small.ckpt')
-		self.saver.restore(self.sess, checkpoint)
+		self.sess.run(self.init_operation)
+		self.saver1.restore(self.sess, checkpoint)
 		print 'Successfully restored the saved model !'
 		moving_loss=-1.0
 
@@ -126,6 +149,7 @@ class CNN:
 			for batch_begin, batch_end in zip(xrange(0, self.utils.size+1, self.options.batch_size), 
 						xrange(self.options.batch_size, self.utils.size+1, self.options.batch_size)):
 				
+				batch_begin_time = time.time()
 				# Load chunk of data here
 				# This includes both the image data and their corresponding annotations
 				images, loss_feed = self.utils.load_data(self.options.dataset_dir, self.options.ann_parsed_file, batch_begin, batch_end, batch_begin==0)
@@ -133,6 +157,7 @@ class CNN:
 				# Evaluate loss here and do back-prop
 				feed_dict = {self.loss_feed_dict[key]: loss_feed[key] for key in self.loss_feed_dict}
 				feed_dict[self.x] = images
+				feed_dict[self.lr] = self.learning_rate
 
 				_, _loss = self.sess.run([self.predictions, self._loss], feed_dict=feed_dict)
 
@@ -140,10 +165,22 @@ class CNN:
 					moving_loss = _loss
 				moving_loss = 0.9 * moving_loss + 0.1 * _loss
 
-			
-			print 'Epoch: %3d\tMoving Loss: %3f\tTime: %3f' % (epoch+1, moving_loss, time.time()-epoch_begin_time)
-			if epoch % self.options.save_ckpt_after == 0:
-				saved_dir = self.saver.save(self.sess, self.options.new_ckpt_dir+'model_{}.ckpt'.format(epoch))
+				# print 'Epoch: %3d\tBatch: %3d\tLoss: %3f\tMoving Loss: %3f\tTime: %3f' % (epoch+1, batch_number, _loss, moving_loss, time.time()-batch_begin_time)
+				batch_number += 1	
+
+			# decay learning rate at this rate
+			if epoch == 75:
+				self.learning_rate = self.learning_rate * self.options.lr_decay_factor
+			elif epoch == 105:
+				self.learning_rate = self.learning_rate * self.options.lr_decay_factor
+
+			# print loss and checkpoint after every certain epochs
+			print 'Epoch: %3d/%3d\tMoving Loss: %3f\tTime: %3f' % (epoch+1, self.options.epochs, moving_loss, time.time()-epoch_begin_time)
+			# if epoch % self.options.save_ckpt_after == 0:
+			# 	saved_dir = self.saver2.save(self.sess, self.options.new_ckpt_dir+'model_{}.ckpt'.format(epoch))
+		
+		# save the final checkpoint file
+		saved_dir = self.saver2.save(self.sess, self.options.new_ckpt_dir+'final_model.ckpt')
 			
 
 	def test(self, test_image):
@@ -151,8 +188,8 @@ class CNN:
 		test the model
 		"""
 		with tf.Session() as sess:
-			checkpoint = self.options.checkpoint_dir+'YOLO_small.ckpt'																						
-			self.saver.restore(sess, checkpoint)
+			checkpoint = self.options.new_ckpt_dir+'final_model.ckpt'																						
+			self.saver2.restore(sess, checkpoint)
 			print 'Restored the model successfully from "{}"!!'.format(checkpoint)
 
 			print '\nFollowing are the detected objects in the image "{}"'.format(test_image)
@@ -172,7 +209,7 @@ class CNN:
 			inputs[0] = (img_resized_np/255.0)*2.0-1.0
 
 
-			net_output = sess.run(self.fc_31, feed_dict={self.x : inputs})
+			net_output = sess.run(self.predictions, feed_dict={self.x : inputs})
 			self.result = self.interpret_output(net_output[0])
 			self.show_results(img, self.result)
 			print '\nTotal time taken : {}'.format(time.time()-s)
@@ -180,16 +217,21 @@ class CNN:
 	def interpret_output(self, output):
 		
 		# these are the final class specific probability scores for each of the box - 
-		probs = np.zeros((7,7,2,20))
+		C = self.options.C
+		B = self.options.B
+		S = self.options.S
+
+		probs = np.zeros((S,S,B,C))
 
 		# [980] class specific probability for each grid cell
-		class_probs = np.reshape(output[0:980],(7,7,20))
+		class_probs = np.reshape(output[0:S*S*C],(S,S,C))
 		
 		# [98] 
-		scales = np.reshape(output[980:1078],(7,7,2))
+		scales = np.reshape(output[S*S*C:S*S*C+S*S*B],(S,S,B))
 		
 		# [392] 
-		boxes = np.reshape(output[1078:],(7,7,2,4))
+		# print len(output)
+		boxes = np.reshape(output[S*S*C+S*S*B:],(7,7,2,4))
 		
 		# 
 		offset = np.transpose(np.reshape(np.array([np.arange(7)]*14),(2,7,7)),(1,2,0))
@@ -207,8 +249,8 @@ class CNN:
 		boxes[:,:,:,3] *= self.h_img
 
 		# Generate the class specific probability scores for each of the bounding box in each of the grid cell
-		for i in range(2):
-			for j in range(20):
+		for i in range(B):
+			for j in range(C):
 				probs[:,:,i,j] = np.multiply(class_probs[:,:,j],scales[:,:,i])
 
 		# Threshold the probability values for each bounding box
@@ -222,7 +264,6 @@ class CNN:
 		# print boxes_filtered 		# (x,y,w,h) for each of the fitered box
 		# print probs_filtered 		# probability for each of the predicted class
 		# print classes_num_filtered # class index of the predicted probability
-
 
 		argsort = np.array(np.argsort(probs_filtered))[::-1]
 		boxes_filtered = boxes_filtered[argsort]
@@ -263,7 +304,7 @@ class CNN:
 			h = int(results[i][4])//2
 			
 			print '    class : ' + results[i][0] + ' , [x,y,w,h]=[' + str(x) + ',' + str(y) + ',' + str(int(results[i][3])) + ',' + str(int(results[i][4]))+'], Confidence = ' + str(results[i][5])
-			cv2.rectangle(img_cp, (x-w,y-h), (x+w,y+h), (0,255,0), 8)
+			cv2.rectangle(img_cp, (x-w,y-h), (x+w,y+h), (0,255,0), 4)
 			# cv2.putText(img_cp, results[i][0] + ' : %.2f' % results[i][5], (x-w+5,y-h-7), cv2.FONT_ITALIC, 0.5, (0,0,0), 1)
 			
 		cv2.imwrite(self.image_file, img_cp)			

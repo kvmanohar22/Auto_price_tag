@@ -59,7 +59,7 @@ def conv2d(idx, input_volume, kernel, name, alpha, stride=1, is_training=True):
 	final = tf.add(conv, b)
 
 	# Apply leaky relu activation function with alpha as alpha
-	return tf.maximum(alpha*final, final)	
+	return tf.maximum(alpha*final, final)
 
 
 def max_pool(idx, input_volume, kernel=2, stride=2, name=None):
